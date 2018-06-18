@@ -69,7 +69,9 @@ void main()
 		}
 
 		gl_FragColor = ambient + diffuse + specular;  // 計算顏色 ambient + diffuse + specular;
-		gl_FragColor.w = 1.0;	// 設定 alpha 為 1.0
+		//gl_FragColor.w = 1.0;	// 設定 alpha 為 1.0
+		// 設定為傳入材質的 alpha,DiffuseProduct.w
+		gl_FragColor.w = DiffuseProduct.w;
 		// gl_FragColor = vec4((ambient + diffuse + specular).xyz, 1.0);
 #ifdef SILHOUETTE
 	vec4 edgeColor = vec4(1.0, 0.0, 0.0, 1.0);

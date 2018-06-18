@@ -36,8 +36,9 @@ mat4 g_mxProjection;
 
 // For Objects
 CChecker      *g_pChecker;
-CSolidCube    *g_pCube;
-CSolidSphere  *g_pSphere;
+CObjReader	  *g_pGemSweet;
+CObjReader	  *g_pGemToy;
+CObjReader	  *g_pGemGarden;
 CObjReader	  *g_pStarFruit;
 
 CQuad         *g_LeftWall, *g_RightWall;
@@ -45,11 +46,11 @@ CQuad         *g_FrontWall, *g_BackWall;
 CQuad         *g_TopWall;
 
 // For View Point
-GLfloat g_fRadius = 5.0;
+GLfloat g_fRadius = 6.0;
 GLfloat g_fTheta = 60.0f*DegreesToRadians;
 GLfloat g_fPhi = 45.0f*DegreesToRadians;
 GLfloat g_fCameraMoveX = 0.f;				// for camera movment
-GLfloat g_fCameraMoveY = 6.0f;				// for camera movment
+GLfloat g_fCameraMoveY = 7.0f;				// for camera movment
 GLfloat g_fCameraMoveZ = 0.f;				// for camera movment
 mat4	g_matMoveDir;		// 鏡頭移動方向
 point4  g_MoveDir;
@@ -67,7 +68,7 @@ float g_fLightR = 0.95f;
 float g_fLightG = 0.95f;
 float g_fLightB = 0.95f;
 CWireSphere *g_pLight;
-point4 g_vLight( 4.0f, 4.0f, 0.0f, 1.0f); // x = r cos(theta) = 3, z = r sin(theta) = 0
+point4 g_vLight( 4.0f, 10.0f, 0.0f, 1.0f); // x = r cos(theta) = 3, z = r sin(theta) = 0
 color4 g_fLightI( g_fLightR, g_fLightG, g_fLightB, 1.0f); 
 //----------------------------------------------------------------------------
 
@@ -77,8 +78,9 @@ extern void IdleProcess();
 
 void init( void )
 {
-	mat4 mxT;
+	mat4 mxT, mxS;
 	vec4 vT, vColor;
+	vec3 vS;
 	// 產生所需之 Model View 與 Projection Matrix
 
 	point4  eye(g_fRadius*sin(g_fTheta)*sin(g_fPhi), g_fRadius*cos(g_fTheta), g_fRadius*sin(g_fTheta)*cos(g_fPhi), 1.0f);
@@ -150,32 +152,52 @@ void init( void )
 	g_TopWall->SetKaKdKsShini(0, 0.8f, 0.5f, 1);
 
 	//-----------------------------------------
-	g_pCube = new CSolidCube;
+	g_pGemSweet = new CObjReader("obj/gem_sweet.obj");		//紅水晶
 // Part 3 : materials
 #ifdef SETTING_MATERIALS
-	g_pCube->SetMaterials(vec4(0), vec4(0.85f, 0, 0, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	g_pCube->SetKaKdKsShini(0.15f, 0.8f, 0.2f, 2);
+	g_pGemSweet->SetMaterials(vec4(0), vec4(0.85f, 0, 0, 0.7f), vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	g_pGemSweet->SetKaKdKsShini(0.15f, 0.95f, 0.5f, 5);
 #endif
-	g_pCube->SetShader();
+	g_pGemSweet->SetShader();
 	// 設定 Cube
-	vT.x = 1.5; vT.y = 0.5; vT.z = -1.5;
+	vT.x = 6.0f; vT.y = 1.0f; vT.z = -6.0f;	//Location
 	mxT = Translate(vT);
-	g_pCube->SetTRSMatrix(mxT);
-	g_pCube->SetShadingMode(GOURAUD_SHADING);
+	vS.x = vS.y = vS.z = 0.5f;				//Scale
+	mxS = Scale(vS);
+	g_pGemSweet->SetTRSMatrix(mxT * mxS);
+	g_pGemSweet->SetShadingMode(GOURAUD_SHADING);
 
 	//-----------------------------------------
-	g_pSphere = new CSolidSphere(1, 16, 16);
+	g_pGemGarden = new CObjReader("obj/gem_garden.obj");		//紫水晶
+	// Part 3 : materials
+#ifdef SETTING_MATERIALS
+	g_pGemGarden->SetMaterials(vec4(0), vec4(0.85f, 0.0f, 0.85f, 0.7f), vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	g_pGemGarden->SetKaKdKsShini(0.15f, 0.95f, 0.8f, 5);
+#endif
+	g_pGemGarden->SetShader();
+	// 設定 Cube
+	vT.x = 6.0f; vT.y = 1.0f; vT.z = 6.0f;	//Location
+	mxT = Translate(vT);
+	vS.x = vS.y = vS.z = 0.5f;				//Scale
+	mxS = Scale(vS);
+	g_pGemGarden->SetTRSMatrix(mxT * mxS);
+	g_pGemGarden->SetShadingMode(GOURAUD_SHADING);
+
+	//-----------------------------------------
+	g_pGemToy = new CObjReader("obj/gem_toy.obj");				//藍水晶
 // Part 3 : materials
 #ifdef SETTING_MATERIALS
-	g_pSphere->SetMaterials(vec4(0), vec4(0, 0, 0.85f, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	g_pSphere->SetKaKdKsShini(0.15f, 0.53f, 0.78f, 4);
+	g_pGemToy->SetMaterials(vec4(0), vec4(0, 0, 0.85f, 0.7f), vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	g_pGemToy->SetKaKdKsShini(0.15f, 0.95f, 0.95f, 5);
 #endif
-	g_pSphere->SetShader();
+	g_pGemToy->SetShader();
 	// 設定 Sphere
-	vT.x = -1.5; vT.y = 1.0; vT.z = 1.5;
+	vT.x = -6.0f; vT.y = 1.0f; vT.z = 0.0f;	//Location
 	mxT = Translate(vT);
-	g_pSphere->SetTRSMatrix(mxT);
-	g_pSphere->SetShadingMode(GOURAUD_SHADING);
+	vS.x = vS.y = vS.z = 0.5f;				//Scale
+	mxS = Scale(vS);
+	g_pGemToy->SetTRSMatrix(mxT * mxS);
+	g_pGemToy->SetShadingMode(GOURAUD_SHADING);
 
 	//-----------------------------------------
 	//g_pStarFruit
@@ -187,9 +209,11 @@ void init( void )
 #endif
 	g_pStarFruit->SetShader();
 	// 設定 StarFruit
-	vT.x = 3.0; vT.y = 0.5; vT.z = 3.0;
+	vT.x = 0.0f; vT.y = 1.0f; vT.z = 0.0f;	//Location
 	mxT = Translate(vT);
-	g_pStarFruit->SetTRSMatrix(mxT);
+	vS.x = vS.y = vS.z = 2.5f;				//Scale
+	mxS = Scale(vS);
+	g_pStarFruit->SetTRSMatrix(mxT * mxS);
 	//g_pStarFruit->SetShadingMode(GOURAUD_SHADING);
 
 	//------------------------------------------
@@ -209,8 +233,9 @@ void init( void )
 	bool bPDirty;
 	mat4 mpx = camera->getProjectionMatrix(bPDirty);
 	g_pChecker->SetProjectionMatrix(mpx);
-	g_pCube->SetProjectionMatrix(mpx);
-	g_pSphere->SetProjectionMatrix(mpx);
+	g_pGemSweet->SetProjectionMatrix(mpx);
+	g_pGemToy->SetProjectionMatrix(mpx);
+	g_pGemGarden->SetProjectionMatrix(mpx);
 	g_pStarFruit->SetProjectionMatrix(mpx);
 
 	g_pLight->SetProjectionMatrix(mpx);
@@ -225,19 +250,26 @@ void init( void )
 void GL_Display( void )
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); // clear the window
-
-	g_pChecker->Draw();
-	g_pSphere->Draw();
-	g_pCube->Draw();
-	g_pStarFruit->Draw();
+	glEnable(GL_BLEND); //開透明度
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //計算透明度
 
 	g_pLight->Draw();
-
+	g_pChecker->Draw();
 	g_LeftWall->Draw();
 	g_RightWall->Draw();
 	g_FrontWall->Draw();
 	g_BackWall->Draw();
 	g_TopWall->Draw();
+
+	g_pStarFruit->Draw();
+
+	glDepthMask(GL_FALSE);
+	g_pGemToy->Draw();
+	g_pGemSweet->Draw();
+	g_pGemGarden->Draw();
+
+	glDisable(GL_BLEND);// 關閉 Blending
+	glDepthMask(GL_TRUE);// 開啟對 Z-Buffer 的寫入操作
 
 	glutSwapBuffers();	// 交換 Frame Buffer
 }
@@ -279,8 +311,9 @@ void onFrameMove(float delta)
 	mvx = camera->getViewMatrix(bVDirty);
 	if (bVDirty) {
 		g_pChecker->SetViewMatrix(mvx);
-		g_pCube->SetViewMatrix(mvx);
-		g_pSphere->SetViewMatrix(mvx);
+		g_pGemSweet->SetViewMatrix(mvx);
+		g_pGemToy->SetViewMatrix(mvx);
+		g_pGemGarden->SetViewMatrix(mvx);
 		g_pStarFruit->SetViewMatrix(mvx);
 
 		g_pLight->SetViewMatrix(mvx);
@@ -297,8 +330,9 @@ void onFrameMove(float delta)
 	}
 	// 如果需要重新計算時，在這邊計算每一個物件的顏色
 	g_pChecker->Update(delta, g_vLight, g_fLightI);
-	g_pCube->Update(delta, g_vLight, g_fLightI);
-	g_pSphere->Update(delta, g_vLight, g_fLightI);
+	g_pGemSweet->Update(delta, g_vLight, g_fLightI);
+	g_pGemToy->Update(delta, g_vLight, g_fLightI);
+	g_pGemGarden->Update(delta, g_vLight, g_fLightI);
 	g_pStarFruit->Update(delta, g_vLight, g_fLightI);
 
 	g_pLight->Update(delta);
@@ -422,8 +456,9 @@ void Win_Keyboard( unsigned char key, int x, int y )
 //---------------------------------------------------
     case 033:
 		glutIdleFunc( NULL );
-		delete g_pCube;
-		delete g_pSphere;
+		delete g_pGemSweet;
+		delete g_pGemToy;
+		delete g_pGemGarden;
 		delete g_pChecker;
 		delete g_pStarFruit;
 		delete g_pLight;
@@ -482,6 +517,8 @@ void GL_Reshape(GLsizei w, GLsizei h)
 	glViewport(0, 0, w, h);
 	glClearColor( 0.0, 0.0, 0.0, 1.0 ); // black background
 	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_BLEND); //開透明度
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //計算透明度
 }
 
 //----------------------------------------------------------------------------

@@ -9,15 +9,16 @@ CObjReader::CObjReader(char *objfile)
 	FILE *pfile;
 	char pLineHead[20];
 	int face[3][3]; //讀取用
-	int ifaces, ivec;	//點、面數紀錄
-	ifaces = ivec = 0;
+	int ivec, ifaces, inormal;	//點、面、法向量數紀錄
+	ifaces = ivec = inormal = 0;
 
 	if ((pfile = fopen(objfile, "r")) == NULL) {
 		printf("obj file can't open."); system("pause");
 	}
 	while (!feof(pfile)) { //是否到檔案尾
 		fscanf(pfile, "%s", pLineHead); //讀取字串
-		if (strcmp(pLineHead, "v") == 0) ivec++; //讀取face
+		if (strcmp(pLineHead, "v") == 0) ivec++; //讀取point
+		else if (strcmp(pLineHead, "vn") == 0) inormal++; //讀取normal
 		else if (strcmp(pLineHead, "f") == 0) ifaces++; //讀取face
 	}
 
@@ -27,13 +28,12 @@ CObjReader::CObjReader(char *objfile)
 	m_pPoints = new vec4[m_iNumVtx];	//使用點
 	m_pNormals = new vec3[m_iNumVtx];	//Normal
 	m_pColors = new vec4[m_iNumVtx];	//顏色
-	m_pTex = new vec2[m_iNumVtx];		//貼圖
 
-	_vec4Points = new vec4[ivec]; //資料點 (vec4)
-	_vec3Points = new vec3[ivec]; //資料點 (vec3)
+	_vec4Points = new vec4[ivec];		//資料點 (vec4)
+	_vec3Points = new vec3[inormal];	//法向量 (vec3)
 
-	int pCount = 0;
-	int vCount = 0;
+	int pCount, vCount, nCount;
+	pCount = vCount = nCount = 0;
 	rewind(pfile);	//重新指到檔案頭
 
 	while (!feof(pfile)) { //是否到檔案尾
@@ -41,10 +41,11 @@ CObjReader::CObjReader(char *objfile)
 		if (strcmp(pLineHead, "v") == 0) { //讀取vertex
 			fscanf(pfile, "%f %f %f", &_vec4Points[vCount].x, &_vec4Points[vCount].y, &_vec4Points[vCount].z); //讀取3點
 			_vec4Points[vCount].w = 1;
-			_vec3Points[vCount].x = _vec4Points[vCount].x;	// 用vec3儲存
-			_vec3Points[vCount].y = _vec4Points[vCount].y;
-			_vec3Points[vCount].z = _vec4Points[vCount].z;
 			vCount++;
+		}
+		else if (strcmp(pLineHead, "vn") == 0) { //讀取normal
+			fscanf(pfile, "%f %f %f", &_vec3Points[nCount].x, &_vec3Points[nCount].y, &_vec3Points[nCount].z); //讀取3點
+			nCount++;
 		}
 		else if (strcmp(pLineHead, "f") == 0) { //讀取face
 			fscanf(pfile, "%d/%d/%d %d/%d/%d %d/%d/%d", &face[0][0], &face[0][1], &face[0][2],
@@ -71,7 +72,7 @@ CObjReader::CObjReader(char *objfile)
 	for (int i = 0; i < m_iNumVtx; i++) m_pColors[i] = vec4(-1.0f, -1.0f, -1.0f, 1.0f);
 
 	// 設定材質
-	SetMaterials(vec4(0), vec4(0.5f, 0.5f, 0.5f, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	SetMaterials(vec4(0), vec4(0.5f, 0.5f, 0.5f, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));	//gray
 	SetKaKdKsShini(0, 0.8f, 0.2f, 1);
 }
 
@@ -174,8 +175,12 @@ void CObjReader::Update(float dt, point4 vLightPos, color4 vLightI)
 	m_vLightInView = m_mxView * vLightPos;		// 將 Light 轉換到鏡頭座標再傳入
 												// 算出 AmbientProduct DiffuseProduct 與 SpecularProduct 的內容
 	m_AmbientProduct = m_Material.ka * m_Material.ambient  * vLightI;
+	m_AmbientProduct.w = m_Material.ambient.w;
 	m_DiffuseProduct = m_Material.kd * m_Material.diffuse  * vLightI;
+	m_DiffuseProduct.w = m_Material.diffuse.w;
+	// 保留原始的 alpha 值，不受光源與其他參數的干擾
 	m_SpecularProduct = m_Material.ks * m_Material.specular * vLightI;
+	m_SpecularProduct.w = m_Material.specular.w;
 #endif
 }
 
