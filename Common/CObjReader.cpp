@@ -26,8 +26,11 @@ CObjReader::CObjReader(char *objfile)
 
 	m_pPoints = new vec4[m_iNumVtx];	//使用點
 	m_pNormals = new vec3[m_iNumVtx];	//Normal
-	m_pColors = new vec4[m_iNumVtx];	//顏色點
-	_vecPoints = new vec4[ivec]; //資料點
+	m_pColors = new vec4[m_iNumVtx];	//顏色
+	m_pTex = new vec2[m_iNumVtx];		//貼圖
+
+	_vec4Points = new vec4[ivec]; //資料點 (vec4)
+	_vec3Points = new vec3[ivec]; //資料點 (vec3)
 
 	int pCount = 0;
 	int vCount = 0;
@@ -36,17 +39,20 @@ CObjReader::CObjReader(char *objfile)
 	while (!feof(pfile)) { //是否到檔案尾
 		fscanf(pfile, "%s", pLineHead); //讀取字串
 		if (strcmp(pLineHead, "v") == 0) { //讀取vertex
-			fscanf(pfile, "%f %f %f", &_vecPoints[vCount].x, &_vecPoints[vCount].y, &_vecPoints[vCount].z); //讀取3點
-			_vecPoints[vCount].w = 1;
+			fscanf(pfile, "%f %f %f", &_vec4Points[vCount].x, &_vec4Points[vCount].y, &_vec4Points[vCount].z); //讀取3點
+			_vec4Points[vCount].w = 1;
+			_vec3Points[vCount].x = _vec4Points[vCount].x;	// 用vec3儲存
+			_vec3Points[vCount].y = _vec4Points[vCount].y;
+			_vec3Points[vCount].z = _vec4Points[vCount].z;
 			vCount++;
 		}
 		else if (strcmp(pLineHead, "f") == 0) { //讀取face
 			fscanf(pfile, "%d/%d/%d %d/%d/%d %d/%d/%d", &face[0][0], &face[0][1], &face[0][2],
-				&face[1][0], &face[1][1], &face[1][2],
-				&face[2][0], &face[2][1], &face[2][2]); //讀取face
+														&face[1][0], &face[1][1], &face[1][2],
+														&face[2][0], &face[2][1], &face[2][2]); //讀取face
 			for (int i = 0; i < 3; i++) {
-				m_pPoints[pCount + i] = _vecPoints[face[i][0] - 1];
-				m_pNormals[pCount + i] = vec3(0, 1.0f, 0);  // Normal Vector 的 W 為 0
+				m_pPoints[pCount + i] = _vec4Points[face[i][0] - 1];	// 讀取頂點
+				m_pNormals[pCount + i] = _vec3Points[face[i][2] - 1];	// 讀取Normal
 			}
 			pCount += 3;
 		}
@@ -72,7 +78,8 @@ CObjReader::CObjReader(char *objfile)
 CObjReader::~CObjReader()
 {
 	//歸還空間
-	if(_vecPoints != NULL) delete[] _vecPoints;
+	if (_vec4Points != NULL) delete[] _vec4Points;
+	if (_vec3Points != NULL) delete[] _vec3Points;
 }
 
 void CObjReader::Draw()
@@ -121,12 +128,9 @@ void CObjReader::RenderWithFlatShading(const LightSource &Lights)
 
 void CObjReader::RenderWithGouraudShading(vec4 vLightPos, color4 vLightI)
 {
-	vec4 vCentroidP;
-	for (int i = 0; i < m_iNumVtx; i += 6) {
-		m_pColors[i] = m_pColors[i + 3] = PhongReflectionModel(m_pPoints[i], m_pNormals[i], vLightPos, vLightI);
-		m_pColors[i + 2] = m_pColors[i + 4] = PhongReflectionModel(m_pPoints[i + 2], m_pNormals[i + 2], vLightPos, vLightI);
-		m_pColors[i + 1] = PhongReflectionModel(m_pPoints[i + 1], m_pNormals[i + 1], vLightPos, vLightI);
-		m_pColors[i + 5] = PhongReflectionModel(m_pPoints[i + 5], m_pNormals[i + 5], vLightPos, vLightI);
+	for (int i = 0; i < m_iNumVtx; i++) {
+		m_pColors[i] = PhongReflectionModel(m_pPoints[i], m_pNormals[i], vLightPos, vLightI);
+		//vertcies' Color = PhongReflectionModel(點座標, 法向量, 光源位置, 光源強度)
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, m_uiBuffer);
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec4)*m_iNumVtx + sizeof(vec3)*m_iNumVtx, sizeof(vec4)*m_iNumVtx, m_pColors); // vertcies' Color
@@ -134,12 +138,8 @@ void CObjReader::RenderWithGouraudShading(vec4 vLightPos, color4 vLightI)
 
 void CObjReader::RenderWithGouraudShading(const LightSource &Lights)
 {
-	vec4 vCentroidP;
-	for (int i = 0; i < m_iNumVtx; i += 6) {
-		m_pColors[i] = m_pColors[i + 3] = PhongReflectionModel(m_pPoints[i], m_pNormals[i], Lights);
-		m_pColors[i + 2] = m_pColors[i + 4] = PhongReflectionModel(m_pPoints[i + 2], m_pNormals[i + 2], Lights);
-		m_pColors[i + 1] = PhongReflectionModel(m_pPoints[i + 1], m_pNormals[i + 1], Lights);
-		m_pColors[i + 5] = PhongReflectionModel(m_pPoints[i + 5], m_pNormals[i + 5], Lights);
+	for (int i = 0; i < m_iNumVtx; i++) {
+		m_pColors[i] = PhongReflectionModel(m_pPoints[i], m_pNormals[i], Lights);
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, m_uiBuffer);
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec4)*m_iNumVtx + sizeof(vec3)*m_iNumVtx, sizeof(vec4)*m_iNumVtx, m_pColors); // vertcies' Color

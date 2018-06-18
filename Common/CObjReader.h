@@ -11,7 +11,8 @@ typedef Angel::vec4  point4;
 class CObjReader : public CShape
 {
 private:
-	vec4 *_vecPoints; //資料點
+	vec4 *_vec4Points; //資料點 (vec4)
+	vec3 *_vec3Points; //資料點 (vec3)
 
 public:
 	CObjReader(char *);

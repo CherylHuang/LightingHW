@@ -179,7 +179,7 @@ void init( void )
 
 	//-----------------------------------------
 	//g_pStarFruit
-	g_pStarFruit = new CObjReader("obj/starfruit.obj");	//楊桃
+	g_pStarFruit = new CObjReader("obj/starfruit.obj");		//楊桃
 	// Part 3 : materials
 #ifdef SETTING_MATERIALS
 	g_pStarFruit->SetMaterials(vec4(0), vec4(0.85f, 0.85f, 0, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -187,10 +187,10 @@ void init( void )
 #endif
 	g_pStarFruit->SetShader();
 	// 設定 StarFruit
-	vT.x = 1.5; vT.y = 0.5; vT.z = -1.5;
+	vT.x = 3.0; vT.y = 0.5; vT.z = 3.0;
 	mxT = Translate(vT);
 	g_pStarFruit->SetTRSMatrix(mxT);
-	g_pStarFruit->SetShadingMode(GOURAUD_SHADING);
+	//g_pStarFruit->SetShadingMode(GOURAUD_SHADING);
 
 	//------------------------------------------
 	// 設定 代表 Light 的 WireSphere
@@ -227,8 +227,8 @@ void GL_Display( void )
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); // clear the window
 
 	g_pChecker->Draw();
-	//g_pSphere->Draw();
-	//g_pCube->Draw();
+	g_pSphere->Draw();
+	g_pCube->Draw();
 	g_pStarFruit->Draw();
 
 	g_pLight->Draw();
@@ -338,7 +338,6 @@ void Win_Keyboard( unsigned char key, int x, int y )
 			if (g_fCameraMoveZ > 8.5) g_fCameraMoveZ = 8.5f;
 			else if (g_fCameraMoveZ < -8.5) g_fCameraMoveZ = -8.5f;
 		}
-		printf("%f\n", g_fCameraMoveX);
 		break;
 	case 'S':
 	case 's':
