@@ -1,0 +1,223 @@
+#include "CObjReader.h"
+// Example 4 開始
+// 面同 Example 3 朝上(Y軸)
+// 每一個 Vertex 增加 Normal ，改成繼曾自 CShape，一併處理相關的設定需求
+
+
+CObjReader::CObjReader(char *objfile)
+{
+	FILE *pfile;
+	char pLineHead[20];
+	int face[3][3]; //讀取用
+	int ifaces, ivec;	//點、面數紀錄
+	ifaces = ivec = 0;
+
+	if ((pfile = fopen(objfile, "r")) == NULL) {
+		printf("obj file can't open."); system("pause");
+	}
+	while (!feof(pfile)) { //是否到檔案尾
+		fscanf(pfile, "%s", pLineHead); //讀取字串
+		if (strcmp(pLineHead, "v") == 0) ivec++; //讀取face
+		else if (strcmp(pLineHead, "f") == 0) ifaces++; //讀取face
+	}
+
+	m_iNumVtx = ifaces * 3;	//點數
+	m_pPoints = NULL; m_pNormals = NULL; m_pTex = NULL;
+
+	m_pPoints = new vec4[m_iNumVtx];	//使用點
+	m_pNormals = new vec3[m_iNumVtx];	//Normal
+	m_pColors = new vec4[m_iNumVtx];	//顏色點
+	_vecPoints = new vec4[ivec]; //資料點
+
+	int pCount = 0;
+	int vCount = 0;
+	rewind(pfile);	//重新指到檔案頭
+
+	while (!feof(pfile)) { //是否到檔案尾
+		fscanf(pfile, "%s", pLineHead); //讀取字串
+		if (strcmp(pLineHead, "v") == 0) { //讀取vertex
+			fscanf(pfile, "%f %f %f", &_vecPoints[vCount].x, &_vecPoints[vCount].y, &_vecPoints[vCount].z); //讀取3點
+			_vecPoints[vCount].w = 1;
+			vCount++;
+		}
+		else if (strcmp(pLineHead, "f") == 0) { //讀取face
+			fscanf(pfile, "%d/%d/%d %d/%d/%d %d/%d/%d", &face[0][0], &face[0][1], &face[0][2],
+				&face[1][0], &face[1][1], &face[1][2],
+				&face[2][0], &face[2][1], &face[2][2]); //讀取face
+			for (int i = 0; i < 3; i++) {
+				m_pPoints[pCount + i] = _vecPoints[face[i][0] - 1];
+				m_pNormals[pCount + i] = vec3(0, 1.0f, 0);  // Normal Vector 的 W 為 0
+			}
+			pCount += 3;
+		}
+	}
+	fclose(pfile); //關閉檔案
+
+	// Set shader's name
+	SetShaderName("vsPerPixelLighting.glsl", "fsPerPixelLighting.glsl");
+
+	// Create and initialize a buffer object 
+	//CreateBufferObject();
+
+	// 初始顏色 : -1
+	//m_fColor[0] = -1.0f; m_fColor[1] = -1.0f; m_fColor[2] = -1.0f; m_fColor[3] = 1;
+	// 預設將所有的面都設定成灰色
+	for (int i = 0; i < m_iNumVtx; i++) m_pColors[i] = vec4(-1.0f, -1.0f, -1.0f, 1.0f);
+
+	// 設定材質
+	SetMaterials(vec4(0), vec4(0.5f, 0.5f, 0.5f, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	SetKaKdKsShini(0, 0.8f, 0.2f, 1);
+}
+
+CObjReader::~CObjReader()
+{
+	//歸還空間
+	if(_vecPoints != NULL) delete[] _vecPoints;
+}
+
+void CObjReader::Draw()
+{
+	DrawingSetShader();
+	glDrawArrays( GL_TRIANGLES, 0, m_iNumVtx);
+}
+
+void CObjReader::DrawW()
+{
+	DrawingWithoutSetShader();
+	glDrawArrays( GL_TRIANGLES, 0, m_iNumVtx);
+}
+
+void CObjReader::RenderWithFlatShading(vec4 vLightPos, color4 vLightI)
+{
+	// 以每一個面的三個頂點計算其重心，以該重心作為顏色計算的點頂
+	// 根據 Phong lighting model 計算相對應的顏色，並將顏色儲存到此三個點頂
+	// 因為每一個平面的頂點的 Normal 都相同，所以此處並沒有計算此三個頂點的平均 Normal
+
+	vec4 vCentroidP;
+	for (int i = 0; i < m_iNumVtx; i += 3) {
+		// 計算三角形的重心
+		vCentroidP = (m_pPoints[i] + m_pPoints[i + 1] + m_pPoints[i + 2]) / 3.0f;
+		m_pColors[i] = m_pColors[i + 1] = m_pColors[i + 2] = PhongReflectionModel(vCentroidP, m_pNormals[i], vLightPos, vLightI);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, m_uiBuffer);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec4)*m_iNumVtx + sizeof(vec3)*m_iNumVtx, sizeof(vec4)*m_iNumVtx, m_pColors); // vertcies' Color
+}
+
+void CObjReader::RenderWithFlatShading(const LightSource &Lights)
+{
+	// 以每一個面的三個頂點計算其重心，以該重心作為顏色計算的點頂
+	// 根據 Phong lighting model 計算相對應的顏色，並將顏色儲存到此三個點頂
+	// 因為每一個平面的頂點的 Normal 都相同，所以此處並沒有計算此三個頂點的平均 Normal
+
+	vec4 vCentroidP;
+	for (int i = 0; i < m_iNumVtx; i += 3) {
+		// 計算三角形的重心
+		vCentroidP = (m_pPoints[i] + m_pPoints[i + 1] + m_pPoints[i + 2]) / 3.0f;
+		m_pColors[i] = m_pColors[i + 1] = m_pColors[i + 2] = PhongReflectionModel(vCentroidP, m_pNormals[i], Lights.position, Lights.diffuse);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, m_uiBuffer);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec4)*m_iNumVtx + sizeof(vec3)*m_iNumVtx, sizeof(vec4)*m_iNumVtx, m_pColors); // vertcies' Color
+}
+
+void CObjReader::RenderWithGouraudShading(vec4 vLightPos, color4 vLightI)
+{
+	vec4 vCentroidP;
+	for (int i = 0; i < m_iNumVtx; i += 6) {
+		m_pColors[i] = m_pColors[i + 3] = PhongReflectionModel(m_pPoints[i], m_pNormals[i], vLightPos, vLightI);
+		m_pColors[i + 2] = m_pColors[i + 4] = PhongReflectionModel(m_pPoints[i + 2], m_pNormals[i + 2], vLightPos, vLightI);
+		m_pColors[i + 1] = PhongReflectionModel(m_pPoints[i + 1], m_pNormals[i + 1], vLightPos, vLightI);
+		m_pColors[i + 5] = PhongReflectionModel(m_pPoints[i + 5], m_pNormals[i + 5], vLightPos, vLightI);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, m_uiBuffer);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec4)*m_iNumVtx + sizeof(vec3)*m_iNumVtx, sizeof(vec4)*m_iNumVtx, m_pColors); // vertcies' Color
+}
+
+void CObjReader::RenderWithGouraudShading(const LightSource &Lights)
+{
+	vec4 vCentroidP;
+	for (int i = 0; i < m_iNumVtx; i += 6) {
+		m_pColors[i] = m_pColors[i + 3] = PhongReflectionModel(m_pPoints[i], m_pNormals[i], Lights);
+		m_pColors[i + 2] = m_pColors[i + 4] = PhongReflectionModel(m_pPoints[i + 2], m_pNormals[i + 2], Lights);
+		m_pColors[i + 1] = PhongReflectionModel(m_pPoints[i + 1], m_pNormals[i + 1], Lights);
+		m_pColors[i + 5] = PhongReflectionModel(m_pPoints[i + 5], m_pNormals[i + 5], Lights);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, m_uiBuffer);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec4)*m_iNumVtx + sizeof(vec3)*m_iNumVtx, sizeof(vec4)*m_iNumVtx, m_pColors); // vertcies' Color
+}
+
+
+// 此處所給的 vLightPos 必須是世界座標的確定絕對位置
+void CObjReader::Update(float dt, point4 vLightPos, color4 vLightI)
+{
+#ifdef LIGHTING_WITHCPU
+	if (m_bViewUpdated || m_bTRSUpdated) { // Model View 的相關矩陣內容有更動
+		m_mxMVFinal = m_mxView * m_mxTRS;
+		m_mxMV3X3Final = mat3(
+			m_mxMVFinal._m[0].x, m_mxMVFinal._m[1].x, m_mxMVFinal._m[2].x,
+			m_mxMVFinal._m[0].y, m_mxMVFinal._m[1].y, m_mxMVFinal._m[2].y,
+			m_mxMVFinal._m[0].z, m_mxMVFinal._m[1].z, m_mxMVFinal._m[2].z);
+
+#ifdef GENERAL_CASE
+		m_mxITMV = InverseTransposeMatrix(m_mxMVFinal);
+#endif
+
+		m_bViewUpdated = m_bTRSUpdated = false;
+	}
+	if (m_iMode == FLAT_SHADING) RenderWithFlatShading(vLightPos, vLightI);
+	else RenderWithGouraudShading(vLightPos, vLightI);
+
+#else // Lighting With GPU
+	if (m_bViewUpdated || m_bTRSUpdated) {
+		m_mxMVFinal = m_mxView * m_mxTRS;
+		m_bViewUpdated = m_bTRSUpdated = false;
+	}
+	m_vLightInView = m_mxView * vLightPos;		// 將 Light 轉換到鏡頭座標再傳入
+												// 算出 AmbientProduct DiffuseProduct 與 SpecularProduct 的內容
+	m_AmbientProduct = m_Material.ka * m_Material.ambient  * vLightI;
+	m_DiffuseProduct = m_Material.kd * m_Material.diffuse  * vLightI;
+	m_SpecularProduct = m_Material.ks * m_Material.specular * vLightI;
+#endif
+}
+
+
+void CObjReader::Update(float dt, const LightSource &Lights)
+{
+#ifdef LIGHTING_WITHCPU
+	if (m_bViewUpdated || m_bTRSUpdated) { // Model View 的相關矩陣內容有更動
+		m_mxMVFinal = m_mxView * m_mxTRS;
+		m_mxMV3X3Final = mat3(
+			m_mxMVFinal._m[0].x, m_mxMVFinal._m[1].x, m_mxMVFinal._m[2].x,
+			m_mxMVFinal._m[0].y, m_mxMVFinal._m[1].y, m_mxMVFinal._m[2].y,
+			m_mxMVFinal._m[0].z, m_mxMVFinal._m[1].z, m_mxMVFinal._m[2].z);
+
+#ifdef GENERAL_CASE
+		m_mxITMV = InverseTransposeMatrix(m_mxMVFinal);
+#endif
+
+		m_bViewUpdated = m_bTRSUpdated = false;
+	}
+	if (m_iMode == FLAT_SHADING) RenderWithFlatShading(Lights);
+	else RenderWithGouraudShading(Lights);
+
+#else // Lighting With GPU
+	if (m_bViewUpdated || m_bTRSUpdated) {
+		m_mxMVFinal = m_mxView * m_mxTRS;
+		m_bViewUpdated = m_bTRSUpdated = false;
+	}
+	m_vLightInView = m_mxView * Lights.position;		// 將 Light 轉換到鏡頭座標再傳入
+														// 算出 AmbientProduct DiffuseProduct 與 SpecularProduct 的內容
+	m_AmbientProduct = m_Material.ka * m_Material.ambient  *  Lights.ambient;
+	m_DiffuseProduct = m_Material.kd * m_Material.diffuse  *  Lights.diffuse;
+	m_SpecularProduct = m_Material.ks * m_Material.specular * Lights.specular;
+#endif
+
+}
+
+void CObjReader::Update(float dt)
+{
+	if (m_bViewUpdated || m_bTRSUpdated) { // Model View 的相關矩陣內容有更動
+		m_mxMVFinal = m_mxView * m_mxTRS;
+		m_mxITView = InverseTransposeMatrix(m_mxMVFinal);
+		m_bViewUpdated = m_bTRSUpdated = false;
+	}
+}
