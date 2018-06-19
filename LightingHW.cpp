@@ -113,11 +113,43 @@ LightSource g_Light_Red = {
 	0	// quadraticAttenuation (a + bd + cd^2)^-1 中的 c
 };
 
+bool g_bLightOn_purple = true;
 CWireSphere *g_pLight_purple;	//紫水晶
-point4 g_vLight_purple(10.0f, 3.0f, 10.0f, 1.0f);	// above purple crystal
+point4 g_vLight_purple(6.0f, 5.0f, 6.0f, 1.0f);	// above purple crystal
+LightSource g_Light_Purple = {
+	color4(0, 0, 0, 0), // ambient 
+	g_fLightI_crystalPURPLE, // diffuse
+	g_fLightI_crystalPURPLE, // specular
+	point4(10.0f, 3.0f, 10.0f, 1.0f),   // position
+	point4(0.0f, 0.0f, 0.0f, 1.0f),   // halfVector
+	vec3(10.0f, 0.0f, 10.0f),		  // spotTarget
+	vec3(0.0f, 0.0f, 0.0f),		  // spotDirection，需重新計算
+	1.0f,	// spotExponent(parameter e); cos^(e)(phi) 
+	10.0f,	// spotCutoff;	// (range: [0.0, 90.0], 180.0)  spot 的照明範圍
+	0.98f,	// spotCosCutoff = cos(spotCutoff) ; spot 的照明範圍取 cos
+	1,	// constantAttenuation	(a + bd + cd^2)^-1 中的 a, d 為光源到被照明點的距離
+	0,	// linearAttenuation	    (a + bd + cd^2)^-1 中的 b
+	0	// quadraticAttenuation (a + bd + cd^2)^-1 中的 c
+};
 
+bool g_bLightOn_blue = true;
 CWireSphere *g_pLight_blue;		//藍水晶
-point4 g_vLight_blue(-10.0f, 3.0f, 0.0f, 1.0f);		// above blue crystal
+point4 g_vLight_blue(-6.0f, 7.0f, 0.0f, 1.0f);		// above blue crystal
+LightSource g_Light_Blue = {
+	color4(0, 0, 0, 0), // ambient 
+	g_fLightI_crystalBLUE, // diffuse
+	g_fLightI_crystalBLUE, // specular
+	point4(-10.0f, 5.0f, 0.0f, 1.0f),   // position
+	point4(0.0f, 0.0f, 0.0f, 1.0f),   // halfVector
+	vec3(-10.0f, 0.0f, 0.0f),		  // spotTarget
+	vec3(0.0f, 0.0f, 0.0f),		  // spotDirection，需重新計算
+	1.0f,	// spotExponent(parameter e); cos^(e)(phi) 
+	10.0f,	// spotCutoff;	// (range: [0.0, 90.0], 180.0)  spot 的照明範圍
+	0.98f,	// spotCosCutoff = cos(spotCutoff) ; spot 的照明範圍取 cos
+	1,	// constantAttenuation	(a + bd + cd^2)^-1 中的 a, d 為光源到被照明點的距離
+	0,	// linearAttenuation	    (a + bd + cd^2)^-1 中的 b
+	0	// quadraticAttenuation (a + bd + cd^2)^-1 中的 c
+};
 
 //----------------------------------------------------------------------------
 // 函式的原型宣告
@@ -273,18 +305,34 @@ void init( void )
 	g_pLight->SetTRSMatrix(mxT);
 	g_pLight->SetColor(g_fLightI);
 
-	// 設定 代表 Light 的 WireSphere
+	// 設定 代表 Light_red 的 WireSphere
 	g_pLight_red = new CWireSphere(0.2f, 6, 3);
 	g_pLight_red->SetShader();
 	mxT = Translate(g_vLight_red);
 	g_pLight_red->SetTRSMatrix(mxT);
 	g_pLight_red->SetColor(g_fLightI_crystalRED);
 
+	// 設定 代表 Light_purple 的 WireSphere
+	g_pLight_purple = new CWireSphere(0.2f, 6, 3);
+	g_pLight_purple->SetShader();
+	mxT = Translate(g_vLight_purple);
+	g_pLight_purple->SetTRSMatrix(mxT);
+	g_pLight_purple->SetColor(g_fLightI_crystalPURPLE);
+
+	// 設定 代表 Light_blue 的 WireSphere
+	g_pLight_blue = new CWireSphere(0.2f, 6, 3);
+	g_pLight_blue->SetShader();
+	mxT = Translate(g_vLight_blue);
+	g_pLight_blue->SetTRSMatrix(mxT);
+	g_pLight_blue->SetColor(g_fLightI_crystalBLUE);
+
 	//------------------------------------------
 
 #ifdef LIGHTING_WITHGPU
 	g_pLight->SetLightingDisable();
 	g_pLight_red->SetLightingDisable();
+	g_pLight_purple->SetLightingDisable();
+	g_pLight_blue->SetLightingDisable();
 #endif
 	//-------------------------------------------------------------------
 	// 計算 SpotDirection Vector 同時正規化成單位向量
@@ -302,6 +350,8 @@ void init( void )
 
 	g_pLight->SetProjectionMatrix(mpx);
 	g_pLight_red->SetProjectionMatrix(mpx);
+	g_pLight_purple->SetProjectionMatrix(mpx);
+	g_pLight_blue->SetProjectionMatrix(mpx);
 
 	g_LeftWall->SetProjectionMatrix(mpx);
 	g_RightWall->SetProjectionMatrix(mpx);
@@ -320,6 +370,8 @@ void GL_Display( void )
 
 	g_pLight->Draw();
 	g_pLight_red->Draw();
+	g_pLight_purple->Draw();
+	g_pLight_blue->Draw();
 
 	g_LeftWall->Draw();
 	g_RightWall->Draw();
@@ -394,6 +446,8 @@ void onFrameMove(float delta)
 
 		g_pLight->SetViewMatrix(mvx);
 		g_pLight_red->SetViewMatrix(mvx);
+		g_pLight_purple->SetViewMatrix(mvx);
+		g_pLight_blue->SetViewMatrix(mvx);
 
 		g_LeftWall->SetViewMatrix(mvx);
 		g_RightWall->SetViewMatrix(mvx);
@@ -418,23 +472,45 @@ void onFrameMove(float delta)
 		g_Light_Red.specular = g_fLightI_crystalOff;
 		g_pLight_red->SetColor(g_fLightI_crystalOff);	//wire sphere
 	}
+	if (g_bLightOn_purple) {	// 紫水晶 spot light 開關
+		g_Light_Purple.diffuse = g_fLightI_crystalPURPLE;
+		g_Light_Purple.specular = g_fLightI_crystalPURPLE;
+		g_pLight_purple->SetColor(g_fLightI_crystalPURPLE);	//wire sphere
+	}
+	else {
+		g_Light_Purple.diffuse = g_fLightI_crystalOff;
+		g_Light_Purple.specular = g_fLightI_crystalOff;
+		g_pLight_purple->SetColor(g_fLightI_crystalOff);	//wire sphere
+	}
+	if (g_bLightOn_blue) {	// 藍水晶 spot light 開關
+		g_Light_Blue.diffuse = g_fLightI_crystalBLUE;
+		g_Light_Blue.specular = g_fLightI_crystalBLUE;
+		g_pLight_blue->SetColor(g_fLightI_crystalBLUE);	//wire sphere
+	}
+	else {
+		g_Light_Blue.diffuse = g_fLightI_crystalOff;
+		g_Light_Blue.specular = g_fLightI_crystalOff;
+		g_pLight_blue->SetColor(g_fLightI_crystalOff);	//wire sphere
+	}
 
 	//-------------------------------------------------------------
 	// 如果需要重新計算時，在這邊計算每一個物件的顏色
 	g_pLight->Update(delta);
 	g_pLight_red->Update(delta);
+	g_pLight_purple->Update(delta);
+	g_pLight_blue->Update(delta);
 
 	g_LeftWall->Update(delta, g_Light_Point);		// walls
 	g_RightWall->Update(delta, g_Light_Point);
 	g_FrontWall->Update(delta, g_Light_Point);
 	g_BackWall->Update(delta, g_Light_Point);
 	g_TopWall->Update(delta, g_Light_Point);
-	g_BottomWall->Update(delta, g_Light_Point, g_Light_Red);
+	g_BottomWall->Update(delta, g_Light_Point, g_Light_Red, g_Light_Purple, g_Light_Blue);
 
-	g_pGemSweet->Update(delta, g_Light_Point, g_Light_Red);		// gems
-	g_pGemToy->Update(delta, g_Light_Point, g_Light_Red);
-	g_pGemGarden->Update(delta, g_Light_Point, g_Light_Red);
-	g_pStarFruit->Update(delta, g_Light_Point, g_Light_Red);	// center
+	g_pGemSweet->Update(delta, g_Light_Point, g_Light_Red, g_Light_Purple, g_Light_Blue);		// gems
+	g_pGemToy->Update(delta, g_Light_Point, g_Light_Red, g_Light_Purple, g_Light_Blue);
+	g_pGemGarden->Update(delta, g_Light_Point, g_Light_Red, g_Light_Purple, g_Light_Blue);
+	g_pStarFruit->Update(delta, g_Light_Point, g_Light_Red, g_Light_Purple, g_Light_Blue);		// center
 
 	GL_Display();
 }
@@ -449,7 +525,13 @@ void Win_Keyboard( unsigned char key, int x, int y )
 		g_bAutoRotating = !g_bAutoRotating;
 		break;
 	case  'o':
-		g_bLightOn_red = !g_bLightOn_red;	// spot light above red crystal 開關燈
+		g_bLightOn_red = !g_bLightOn_red;		// spot light above red crystal 開關燈
+		break;
+	case  'i':
+		g_bLightOn_purple = !g_bLightOn_purple;	// spot light above purple crystal 開關燈
+		break;
+	case  'u':
+		g_bLightOn_blue = !g_bLightOn_blue;		// spot light above blue crystal 開關燈
 		break;
 
 	// ---------- for camera movment -----------
@@ -578,6 +660,8 @@ void Win_Keyboard( unsigned char key, int x, int y )
 
 		delete g_pLight;
 		delete g_pLight_red;
+		delete g_pLight_purple;
+		delete g_pLight_blue;
 		CCamera::getInstance()->destroyInstance();
         exit( EXIT_SUCCESS );
         break;

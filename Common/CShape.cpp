@@ -504,7 +504,7 @@ void CShape::UpdateMultiLight(const int LightNum)
 		m_SpecularProduct = m_Material.ks * m_Material.specular * m_Light1.specular;
 		m_SpecularProduct.w = m_Material.specular.w;
 	}
-	if (LightNum > 0 && LightNum <= 3) {	//第二個光源，更新 m_Light2
+	if (LightNum > 1 && LightNum <= 4) {	//第二個光源，更新 m_Light2
 
 		m_vLightInView2 = m_mxView * m_Light2.position;		// 將 Light 轉換到鏡頭座標
 															// 算出 AmbientProduct DiffuseProduct 與 SpecularProduct 的內容
@@ -516,7 +516,7 @@ void CShape::UpdateMultiLight(const int LightNum)
 		m_SpecularProduct2 = m_Material.ks * m_Material.specular * m_Light2.specular;
 		m_SpecularProduct2.w = m_Material.specular.w;
 	}
-	if (LightNum > 0 && LightNum <= 2) {	//第三個光源，更新 m_Light3
+	if (LightNum > 2 && LightNum <= 4) {	//第三個光源，更新 m_Light3
 
 		m_vLightInView3 = m_mxView * m_Light3.position;		// 將 Light 轉換到鏡頭座標
 															// 算出 AmbientProduct DiffuseProduct 與 SpecularProduct 的內容
@@ -528,7 +528,7 @@ void CShape::UpdateMultiLight(const int LightNum)
 		m_SpecularProduct3 = m_Material.ks * m_Material.specular * m_Light3.specular;
 		m_SpecularProduct3.w = m_Material.specular.w;
 	}
-	if (LightNum > 0 && LightNum <= 1) {	//第四個光源，更新 m_Light4
+	if (LightNum > 3 && LightNum <= 4) {	//第四個光源，更新 m_Light4
 
 		m_vLightInView4 = m_mxView * m_Light4.position;		// 將 Light 轉換到鏡頭座標
 															// 算出 AmbientProduct DiffuseProduct 與 SpecularProduct 的內容
