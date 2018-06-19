@@ -79,6 +79,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Common\C2DShape.h" />
+    <ClInclude Include="Common\C2DSprite.h" />
     <ClInclude Include="Common\CCamera.h" />
     <ClInclude Include="Common\CChecker.h" />
     <ClInclude Include="Common\CLineSegment.h" />
@@ -97,6 +99,8 @@
     <ClInclude Include="Header\vec.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Common\C2DShape.cpp" />
+    <ClCompile Include="Common\C2DSprite.cpp" />
     <ClCompile Include="Common\CCamera.cpp" />
     <ClCompile Include="Common\CChecker.cpp" />
     <ClCompile Include="Common\CLineSegment.cpp" />
@@ -117,10 +121,12 @@
     <None Include="fsLighting_GPU.glsl" />
     <None Include="fsPerPixelLighting.glsl" />
     <None Include="fsVtxColor.glsl" />
+    <None Include="fsVtxNormal.glsl" />
     <None Include="vsLighting_CPU.glsl" />
     <None Include="vsLighting_GPU.glsl" />
     <None Include="vsPerPixelLighting.glsl" />
     <None Include="vsVtxColor.glsl" />
+    <None Include="vsVtxNormal.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

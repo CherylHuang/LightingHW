@@ -20,6 +20,7 @@
 #include "Common/CChecker.h"
 #include "Common/CCamera.h"
 #include "Common/CObjReader.h"
+#include "Common/C2DSprite.h"
 
 #define SPACE_KEY 32
 #define SCREEN_SIZE 800
@@ -88,6 +89,14 @@ LightSource g_Light_Point = {
 };
 
 //----------------------------------------------------
+// 2D 介面所需要的相關變數
+// g_p2DBtn 為放在四個角落的代表按鈕的四邊形
+// g_2DView 與  g_2DProj  則是這裡使用 opengl 預設的鏡頭 (0,0,0) 看向 -Z 方向
+// 使用平行投影
+C2DSprite *g_p2DBtn[4];
+mat4  g_2DView;
+mat4  g_2DProj;
+
 //------SPOT LIGHT------//
 color4 g_fLightI_crystalOff(0.0f, 0.0f, 0.0f, 1.0f);	//關燈
 color4 g_fLightI_crystalRED(0.95f, 0.2f, 0.2f, 1.0f);	//spot light 顏色
@@ -158,7 +167,7 @@ extern void IdleProcess();
 void init( void )
 {
 	mat4 mxT, mxS;
-	vec4 vT, vColor;
+	vec4 vT;
 	vec3 vS;
 	// 產生所需之 Model View 與 Projection Matrix
 
@@ -338,6 +347,42 @@ void init( void )
 	// 計算 SpotDirection Vector 同時正規化成單位向量
 	g_Light_Point.UpdateDirection();
 	g_Light_Red.UpdateDirection();
+	g_Light_Purple.UpdateDirection();
+	g_Light_Blue.UpdateDirection();
+
+	//-------------------------------------------------------------------
+
+	// 以下為利用平行投影產生 2D 的介面
+	// 範圍在 X/Y 平面的  -1 到 1 之間，介面都放在 Z = 0 
+
+	g_p2DBtn[0] = new C2DSprite; g_p2DBtn[0]->SetShader();
+	g_p2DBtn[0]->SetDefaultColor(g_fLightI);
+	mxS = Scale(0.1f, 0.1f, 1.0f);
+	mxT = Translate(0.90f, 0.90f, 0);
+	g_p2DBtn[0]->SetTRSMatrix(mxT*mxS);
+	g_p2DBtn[0]->SetViewMatrix(g_2DView);
+	g_p2DBtn[0]->SetViewMatrix(g_2DProj);
+
+	g_p2DBtn[1] = new C2DSprite; g_p2DBtn[1]->SetShader();
+	g_p2DBtn[1]->SetDefaultColor(g_fLightI_crystalRED);
+	mxT = Translate(0.75f, 0.90f, 0);
+	g_p2DBtn[1]->SetTRSMatrix(mxT*mxS);
+	g_p2DBtn[1]->SetViewMatrix(g_2DView);
+	g_p2DBtn[1]->SetViewMatrix(g_2DProj);
+
+	g_p2DBtn[2] = new C2DSprite; g_p2DBtn[2]->SetShader();
+	g_p2DBtn[2]->SetDefaultColor(g_fLightI_crystalPURPLE);
+	mxT = Translate(0.6f, 0.90f, 0);
+	g_p2DBtn[2]->SetTRSMatrix(mxT*mxS);
+	g_p2DBtn[2]->SetViewMatrix(g_2DView);
+	g_p2DBtn[2]->SetViewMatrix(g_2DProj);
+
+	g_p2DBtn[3] = new C2DSprite; g_p2DBtn[3]->SetShader();
+	g_p2DBtn[3]->SetDefaultColor(g_fLightI_crystalBLUE);
+	mxT = Translate(0.45f, 0.90f, 0);
+	g_p2DBtn[3]->SetTRSMatrix(mxT*mxS);
+	g_p2DBtn[3]->SetViewMatrix(g_2DView);
+	g_p2DBtn[3]->SetViewMatrix(g_2DProj);
 
 	//-------------------------------------------------------------------
 	// 不會動到 Projection Matrix ,設定一次即可, 不用在 OnFrameMove 中每次都 Check
@@ -389,6 +434,8 @@ void GL_Display( void )
 
 	glDisable(GL_BLEND);// 關閉 Blending
 	glDepthMask(GL_TRUE);// 開啟對 Z-Buffer 的寫入操作
+
+	for (int i = 0; i < 4; i++) g_p2DBtn[i]->Draw();
 
 	glutSwapBuffers();	// 交換 Frame Buffer
 }
@@ -662,6 +709,7 @@ void Win_Keyboard( unsigned char key, int x, int y )
 		delete g_pLight_red;
 		delete g_pLight_purple;
 		delete g_pLight_blue;
+		for (int i = 0; i < 4; i++) delete g_p2DBtn[i];
 		CCamera::getInstance()->destroyInstance();
         exit( EXIT_SUCCESS );
         break;
@@ -669,10 +717,35 @@ void Win_Keyboard( unsigned char key, int x, int y )
 }
 
 //----------------------------------------------------------------------------
+
+inline void ScreenToUICoordinate(int x, int y, vec2 &pt)
+{
+	pt.x = 2.0f*(float)x / SCREEN_SIZE - 1.0f;
+	pt.y = 2.0f*(float)(SCREEN_SIZE - y) / SCREEN_SIZE - 1.0f;
+}
+
+//------------------------------------------------------
 void Win_Mouse(int button, int state, int x, int y) {
+	vec2 pt;
 	switch(button) {
 		case GLUT_LEFT_BUTTON:   // 目前按下的是滑鼠左鍵
-			//if ( state == GLUT_DOWN ) ; 
+			if (state == GLUT_DOWN) {
+				ScreenToUICoordinate(x, y, pt);
+				if (g_p2DBtn[0]->OnTouches(pt)) {
+					//if (g_p2DBtn[0]->getButtonStatus()) g_bShowZAxis = false;
+					//else g_bShowZAxis = true;
+					g_bAutoRotating = !g_bAutoRotating;
+				}
+				if (g_p2DBtn[1]->OnTouches(pt)) {
+					g_bLightOn_red = !g_bLightOn_red;
+				}
+				if (g_p2DBtn[2]->OnTouches(pt)) {
+					g_bLightOn_purple = !g_bLightOn_purple;
+				}
+				if (g_p2DBtn[3]->OnTouches(pt)) {
+					g_bLightOn_blue = !g_bLightOn_blue;
+				}
+			}
 			break;
 		case GLUT_MIDDLE_BUTTON:  // 目前按下的是滑鼠中鍵 ，換成 Y 軸
 			//if ( state == GLUT_DOWN ) ; 

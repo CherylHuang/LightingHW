@@ -66,6 +66,12 @@
     <ClInclude Include="Common\CObjReader.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="Common\C2DSprite.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\C2DShape.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common\CLineSegment.cpp">
@@ -110,6 +116,12 @@
     <ClCompile Include="Common\CObjReader.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="Common\C2DSprite.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\C2DShape.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="fsLighting_CPU.glsl">
@@ -134,6 +146,12 @@
       <Filter>原始程式檔</Filter>
     </None>
     <None Include="vsVtxColor.glsl">
+      <Filter>原始程式檔</Filter>
+    </None>
+    <None Include="fsVtxNormal.glsl">
+      <Filter>原始程式檔</Filter>
+    </None>
+    <None Include="vsVtxNormal.glsl">
       <Filter>原始程式檔</Filter>
     </None>
   </ItemGroup>
