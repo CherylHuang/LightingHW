@@ -95,6 +95,7 @@ void CObjReader::DrawW()
 	glDrawArrays( GL_TRIANGLES, 0, m_iNumVtx);
 }
 
+//----------------------FLAT SHADING--------------------------
 void CObjReader::RenderWithFlatShading(vec4 vLightPos, color4 vLightI)
 {
 	// –郴翴璸衡ㄤみ赣み肅︹璸衡翴郴
@@ -127,6 +128,7 @@ void CObjReader::RenderWithFlatShading(const LightSource &Lights)
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec4)*m_iNumVtx + sizeof(vec3)*m_iNumVtx, sizeof(vec4)*m_iNumVtx, m_pColors); // vertcies' Color
 }
 
+//----------------------GROUND SHADING--------------------------
 void CObjReader::RenderWithGouraudShading(vec4 vLightPos, color4 vLightI)
 {
 	for (int i = 0; i < m_iNumVtx; i++) {
@@ -146,7 +148,7 @@ void CObjReader::RenderWithGouraudShading(const LightSource &Lights)
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vec4)*m_iNumVtx + sizeof(vec3)*m_iNumVtx, sizeof(vec4)*m_iNumVtx, m_pColors); // vertcies' Color
 }
 
-
+//----------------------UPDATE--------------------------
 // 矪┮倒 vLightPos ゲ斗琌畒夹絋﹚荡癸竚
 void CObjReader::Update(float dt, point4 vLightPos, color4 vLightI)
 {
@@ -185,7 +187,7 @@ void CObjReader::Update(float dt, point4 vLightPos, color4 vLightI)
 }
 
 
-void CObjReader::Update(float dt, const LightSource &Lights)
+void CObjReader::Update(float dt, const LightSource &Lights)	//方
 {
 #ifdef LIGHTING_WITHCPU
 	if (m_bViewUpdated || m_bTRSUpdated) { // Model View 闽痻皚ず甧Τ笆
@@ -209,13 +211,47 @@ void CObjReader::Update(float dt, const LightSource &Lights)
 		m_mxMVFinal = m_mxView * m_mxTRS;
 		m_bViewUpdated = m_bTRSUpdated = false;
 	}
-	m_vLightInView = m_mxView * Lights.position;		// 盢 Light 锣传描繷畒夹肚
-														// 衡 AmbientProduct DiffuseProduct 籔 SpecularProduct ず甧
-	m_AmbientProduct = m_Material.ka * m_Material.ambient  *  Lights.ambient;
-	m_DiffuseProduct = m_Material.kd * m_Material.diffuse  *  Lights.diffuse;
-	m_SpecularProduct = m_Material.ks * m_Material.specular * Lights.specular;
-#endif
+	//砞﹚方 & 穝方计秖
+	m_Light1 = Lights;
+	UpdateMultiLight(1);
 
+#endif
+}
+
+void CObjReader::Update(float dt, const LightSource &Lights, const LightSource &Lights2)	//ㄢ方
+{
+ // Lighting With GPU
+	if (m_bViewUpdated || m_bTRSUpdated) {
+		m_mxMVFinal = m_mxView * m_mxTRS;
+		m_bViewUpdated = m_bTRSUpdated = false;
+	}
+	//砞﹚方 & 穝方计秖
+	m_Light1 = Lights;	m_Light2 = Lights2;
+	UpdateMultiLight(2);
+}
+
+void CObjReader::Update(float dt, const LightSource &Lights, const LightSource &Lights2, const LightSource &Lights3)	//方
+{
+	// Lighting With GPU
+	if (m_bViewUpdated || m_bTRSUpdated) {
+		m_mxMVFinal = m_mxView * m_mxTRS;
+		m_bViewUpdated = m_bTRSUpdated = false;
+	}
+	//砞﹚方 & 穝方计秖
+	m_Light1 = Lights;	m_Light2 = Lights2; m_Light3 = Lights3;
+	UpdateMultiLight(3);
+}
+
+void CObjReader::Update(float dt, const LightSource &Lights, const LightSource &Lights2, const LightSource &Lights3, const LightSource &Lights4)	//方
+{
+	// Lighting With GPU
+	if (m_bViewUpdated || m_bTRSUpdated) {
+		m_mxMVFinal = m_mxView * m_mxTRS;
+		m_bViewUpdated = m_bTRSUpdated = false;
+	}
+	//砞﹚方 & 穝方计秖
+	m_Light1 = Lights;	m_Light2 = Lights2; m_Light3 = Lights3; m_Light4 = Lights4;
+	UpdateMultiLight(4);
 }
 
 void CObjReader::Update(float dt)

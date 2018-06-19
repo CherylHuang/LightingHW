@@ -46,19 +46,21 @@ protected:
 	GLuint  m_uiBuffer;
 
 #ifdef LIGHTING_WITHGPU
-	point4  m_vLightInView;	 // 方畒夹竚
-	GLuint  m_uiLightInView;	 // 方 shader 竚
-	GLuint  m_uiAmbient;		 // light's ambient  籔 Object's ambient  籔 ka 縩
-	GLuint  m_uiDiffuse;		 // light's diffuse  籔 Object's diffuse  籔 kd 縩
-	GLuint  m_uiSpecular;	 // light's specular 籔 Object's specular 籔 ks 縩
-	GLuint  m_uiShininess;
-	GLuint  m_uiLighting;
 
-	LightSource m_Light1;
+	LightSource m_Light1, m_Light2, m_Light3, m_Light4;	//方
 
-	color4 m_AmbientProduct;
-	color4 m_DiffuseProduct;
-	color4 m_SpecularProduct;
+	point4  m_vLightInView, m_vLightInView2, m_vLightInView3, m_vLightInView4;				// 方畒夹竚
+	GLuint  m_uiLightInView, m_uiLightInView2, m_uiLightInView3, m_uiLightInView4;			// 方 shader 竚
+	GLuint  m_uiAmbient, m_uiAmbient2, m_uiAmbient3, m_uiAmbient4;					 // light's ambient  籔 Object's ambient  籔 ka 縩
+	GLuint  m_uiDiffuse, m_uiDiffuse2, m_uiDiffuse3, m_uiDiffuse4;					 // light's diffuse  籔 Object's diffuse  籔 kd 縩
+	GLuint  m_uiSpecular, m_uiSpecular2, m_uiSpecular3, m_uiSpecular4;				 // light's specular 籔 Object's specular 籔 ks 縩
+	GLuint  m_uiShininess, m_uiShininess2, m_uiShininess3, m_uiShininess4;
+	GLuint  m_uiLighting, m_uiLighting2, m_uiLighting3, m_uiLighting4;
+
+	color4 m_AmbientProduct, m_AmbientProduct2, m_AmbientProduct3, m_AmbientProduct4;
+	color4 m_DiffuseProduct, m_DiffuseProduct2, m_DiffuseProduct3, m_DiffuseProduct4;
+	color4 m_SpecularProduct, m_SpecularProduct2, m_SpecularProduct3, m_SpecularProduct4;
+
 	int    m_iLighting;	// 砞﹚琌璶ゴ縊
 #endif
 
@@ -80,6 +82,9 @@ protected:
 	void		CreateBufferObject();
 	void		DrawingSetShader();
 	void		DrawingWithoutSetShader();
+
+	//Multiple lights update (璶穝方计秖)
+	void UpdateMultiLight(const int LightNum);
 
 public:
 	CShape();

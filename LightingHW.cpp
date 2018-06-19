@@ -35,15 +35,14 @@ mat4 g_mxModelView(1.0f);
 mat4 g_mxProjection;
 
 // For Objects
-CChecker      *g_pChecker;
 CObjReader	  *g_pGemSweet;
 CObjReader	  *g_pGemToy;
 CObjReader	  *g_pGemGarden;
 CObjReader	  *g_pStarFruit;
 
+CQuad         *g_BottomWall, *g_TopWall;
 CQuad         *g_LeftWall, *g_RightWall;
 CQuad         *g_FrontWall, *g_BackWall;
-CQuad         *g_TopWall;
 
 // For View Point
 GLfloat g_fRadius = 6.0;
@@ -67,10 +66,58 @@ float g_fLightTheta = 0;
 float g_fLightR = 0.95f;
 float g_fLightG = 0.95f;
 float g_fLightB = 0.95f;
+
 CWireSphere *g_pLight;
 point4 g_vLight( 4.0f, 10.0f, 0.0f, 1.0f); // x = r cos(theta) = 3, z = r sin(theta) = 0
 color4 g_fLightI( g_fLightR, g_fLightG, g_fLightB, 1.0f); 
-//----------------------------------------------------------------------------
+
+LightSource g_Light_Point = {
+	color4(g_fLightR, g_fLightG, g_fLightB, 1.0f), // ambient 
+	color4(g_fLightR, g_fLightG, g_fLightB, 1.0f), // diffuse
+	color4(g_fLightR, g_fLightG, g_fLightB, 1.0f), // specular
+	g_vLight,   // position
+	point4(0.0f, 0.0f, 0.0f, 1.0f),   // halfVector
+	vec3(0.0f, 0.0f, 0.0f),		  // spotTarget
+	vec3(0.0f, 0.0f, 0.0f),		  // spotDirection，需重新計算
+	0.0f,	// spotExponent(parameter e); cos^(e)(phi) , 當 exponent 為 0 時，光源的照明是平均分布
+	180.0f,	// spotCutoff;	// (range: [0.0, 90.0], 180.0)  spot 的照明範圍
+	-1.0f,	// spotCosCutoff = cos(spotCutoff) ; spot 的照明範圍取 cos
+	1,	// constantAttenuation	(a + bd + cd^2)^-1 中的 a, d 為光源到被照明點的距離
+	0,	// linearAttenuation	    (a + bd + cd^2)^-1 中的 b
+	0	// quadraticAttenuation (a + bd + cd^2)^-1 中的 c
+};
+
+//----------------------------------------------------
+//------SPOT LIGHT------//
+color4 g_fLightI_crystalOff(0.0f, 0.0f, 0.0f, 1.0f);	//關燈
+color4 g_fLightI_crystalRED(0.95f, 0.2f, 0.2f, 1.0f);	//spot light 顏色
+color4 g_fLightI_crystalPURPLE(0.95f, 0.2f, 0.95f, 1.0f);
+color4 g_fLightI_crystalBLUE(0.2f, 0.2f, 0.95f, 1.0f);
+
+bool g_bLightOn_red = true;
+CWireSphere *g_pLight_red;		//紅水晶
+point4 g_vLight_red(6.0f, 5.0f, -6.0f, 1.0f);		// above red crystal
+LightSource g_Light_Red = {
+	color4(0, 0, 0, 0), // ambient 
+	g_fLightI_crystalRED, // diffuse
+	g_fLightI_crystalRED, // specular
+	point4(10.0f, 3.0f, -10.0f, 1.0f),   // position
+	point4(0.0f, 0.0f, 0.0f, 1.0f),   // halfVector
+	vec3(10.0f, 0.0f, -10.0f),		  // spotTarget
+	vec3(0.0f, 0.0f, 0.0f),		  // spotDirection，需重新計算
+	1.0f,	// spotExponent(parameter e); cos^(e)(phi) 
+	10.0f,	// spotCutoff;	// (range: [0.0, 90.0], 180.0)  spot 的照明範圍
+	0.98f,	// spotCosCutoff = cos(spotCutoff) ; spot 的照明範圍取 cos
+	1,	// constantAttenuation	(a + bd + cd^2)^-1 中的 a, d 為光源到被照明點的距離
+	0,	// linearAttenuation	    (a + bd + cd^2)^-1 中的 b
+	0	// quadraticAttenuation (a + bd + cd^2)^-1 中的 c
+};
+
+CWireSphere *g_pLight_purple;	//紫水晶
+point4 g_vLight_purple(10.0f, 3.0f, 10.0f, 1.0f);	// above purple crystal
+
+CWireSphere *g_pLight_blue;		//藍水晶
+point4 g_vLight_blue(-10.0f, 3.0f, 0.0f, 1.0f);		// above blue crystal
 
 //----------------------------------------------------------------------------
 // 函式的原型宣告
@@ -91,16 +138,28 @@ void init( void )
 	camera->updatePerspective(60.0, (GLfloat)SCREEN_SIZE / (GLfloat)SCREEN_SIZE, 1.0, 1000.0);
 
 	// 產生物件的實體
-	g_pChecker = new CChecker(GRID_SIZE);
-// Part 3 : materials
-#ifdef SETTING_MATERIALS
-	g_pChecker->SetMaterials(vec4(0), vec4(0, 0.85f, 0, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	g_pChecker->	SetKaKdKsShini(0, 0.8f, 0.5f, 1);
-#endif
-	g_pChecker->SetShadingMode(GOURAUD_SHADING);
-	g_pChecker->SetShader();
 
 	//-------------WALLS--------------
+	vT.x = 0.0f; vT.y = 0.0f; vT.z = 0.0f;
+	mxT = Translate(vT);
+	g_BottomWall = new CQuad;
+	g_BottomWall->SetMaterials(vec4(0.15f, 0.15f, 0.15f, 1.0f), vec4(0.0f, 0.85f, 0, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	g_BottomWall->SetShadingMode(GOURAUD_SHADING);
+	g_BottomWall->SetShader();
+	g_BottomWall->SetColor(vec4(0.6f));
+	g_BottomWall->SetTRSMatrix(mxT * Scale(20.0f, 1, 20.0f));
+	g_BottomWall->SetKaKdKsShini(0, 0.8f, 0.5f, 1);
+
+	vT.x = 0.0f; vT.y = 20.0f; vT.z = 0.0f;
+	mxT = Translate(vT);
+	g_TopWall = new CQuad;
+	g_TopWall->SetMaterials(vec4(0.15f, 0.15f, 0.15f, 1.0f), vec4(0, 0.85f, 0, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	g_TopWall->SetShadingMode(GOURAUD_SHADING);
+	g_TopWall->SetShader();
+	g_TopWall->SetColor(vec4(0.6f));
+	g_TopWall->SetTRSMatrix(mxT * RotateX(180.0f) * Scale(20.0f, 1, 20.0f));
+	g_TopWall->SetKaKdKsShini(0, 0.8f, 0.5f, 1);
+
 	vT.x = -10.0f; vT.y = 10.0f; vT.z = 0;
 	mxT = Translate(vT);
 	g_LeftWall = new CQuad;
@@ -141,18 +200,8 @@ void init( void )
 	g_BackWall->SetTRSMatrix(mxT*RotateX(90.0f)*Scale(20.0f, 1, 20.0f));
 	g_BackWall->SetKaKdKsShini(0, 0.8f, 0.5f, 1);
 
-	vT.x = 0.0f; vT.y = 20.0f; vT.z = 0.0f;
-	mxT = Translate(vT);
-	g_TopWall = new CQuad;
-	g_TopWall->SetMaterials(vec4(0.15f, 0.15f, 0.15f, 1.0f), vec4(0, 0.85f, 0, 1), vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	g_TopWall->SetShadingMode(GOURAUD_SHADING);
-	g_TopWall->SetShader();
-	g_TopWall->SetColor(vec4(0.6f));
-	g_TopWall->SetTRSMatrix(mxT*RotateX(180.0f)*Scale(20.0f, 1, 20.0f));
-	g_TopWall->SetKaKdKsShini(0, 0.8f, 0.5f, 1);
-
 	//-----------------------------------------
-	g_pGemSweet = new CObjReader("obj/gem_sweet.obj");		//紅水晶
+	g_pGemSweet = new CObjReader("obj/gem_sweet.obj");			//紅水晶
 // Part 3 : materials
 #ifdef SETTING_MATERIALS
 	g_pGemSweet->SetMaterials(vec4(0), vec4(0.85f, 0, 0, 0.7f), vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -224,26 +273,42 @@ void init( void )
 	g_pLight->SetTRSMatrix(mxT);
 	g_pLight->SetColor(g_fLightI);
 
+	// 設定 代表 Light 的 WireSphere
+	g_pLight_red = new CWireSphere(0.2f, 6, 3);
+	g_pLight_red->SetShader();
+	mxT = Translate(g_vLight_red);
+	g_pLight_red->SetTRSMatrix(mxT);
+	g_pLight_red->SetColor(g_fLightI_crystalRED);
+
+	//------------------------------------------
+
 #ifdef LIGHTING_WITHGPU
 	g_pLight->SetLightingDisable();
+	g_pLight_red->SetLightingDisable();
 #endif
+	//-------------------------------------------------------------------
+	// 計算 SpotDirection Vector 同時正規化成單位向量
+	g_Light_Point.UpdateDirection();
+	g_Light_Red.UpdateDirection();
 
-	// 因為本範例不會動到 Projection Matrix 所以在這裡設定一次即可
-	// 就不寫在 OnFrameMove 中每次都 Check
+	//-------------------------------------------------------------------
+	// 不會動到 Projection Matrix ,設定一次即可, 不用在 OnFrameMove 中每次都 Check
 	bool bPDirty;
 	mat4 mpx = camera->getProjectionMatrix(bPDirty);
-	g_pChecker->SetProjectionMatrix(mpx);
 	g_pGemSweet->SetProjectionMatrix(mpx);
 	g_pGemToy->SetProjectionMatrix(mpx);
 	g_pGemGarden->SetProjectionMatrix(mpx);
 	g_pStarFruit->SetProjectionMatrix(mpx);
 
 	g_pLight->SetProjectionMatrix(mpx);
+	g_pLight_red->SetProjectionMatrix(mpx);
+
 	g_LeftWall->SetProjectionMatrix(mpx);
 	g_RightWall->SetProjectionMatrix(mpx);
 	g_FrontWall->SetProjectionMatrix(mpx);
 	g_BackWall->SetProjectionMatrix(mpx);
 	g_TopWall->SetProjectionMatrix(mpx);
+	g_BottomWall->SetProjectionMatrix(mpx);
 }
 
 //----------------------------------------------------------------------------
@@ -254,12 +319,14 @@ void GL_Display( void )
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //計算透明度
 
 	g_pLight->Draw();
-	g_pChecker->Draw();
+	g_pLight_red->Draw();
+
 	g_LeftWall->Draw();
 	g_RightWall->Draw();
 	g_FrontWall->Draw();
 	g_BackWall->Draw();
 	g_TopWall->Draw();
+	g_BottomWall->Draw();
 
 	g_pStarFruit->Draw();
 
@@ -288,8 +355,18 @@ void UpdateLightPosition(float dt)
 	}
 	g_vLight.x = g_fLightRadius * cosf(g_fLightTheta);
 	g_vLight.z = g_fLightRadius * sinf(g_fLightTheta);
+
 	mxT = Translate(g_vLight);
 	g_pLight->SetTRSMatrix(mxT);
+
+	//------Update point light------
+		g_Light_Point.position.x = g_vLight.x;
+		g_Light_Point.position.z = g_vLight.z;
+		g_Light_Point.spotDirection.x = g_Light_Point.spotTarget.x - g_Light_Point.position.x;
+		g_Light_Point.spotDirection.y = g_Light_Point.spotTarget.y - g_Light_Point.position.y;
+		g_Light_Point.spotDirection.z = g_Light_Point.spotTarget.z - g_Light_Point.position.z;
+		g_Light_Point.spotDirection = normalize(g_Light_Point.spotDirection);
+
 }
 //----------------------------------------------------------------------------
 
@@ -310,38 +387,54 @@ void onFrameMove(float delta)
 	//auto camera = CCamera::getInstance();
 	mvx = camera->getViewMatrix(bVDirty);
 	if (bVDirty) {
-		g_pChecker->SetViewMatrix(mvx);
 		g_pGemSweet->SetViewMatrix(mvx);
 		g_pGemToy->SetViewMatrix(mvx);
 		g_pGemGarden->SetViewMatrix(mvx);
 		g_pStarFruit->SetViewMatrix(mvx);
 
 		g_pLight->SetViewMatrix(mvx);
+		g_pLight_red->SetViewMatrix(mvx);
 
 		g_LeftWall->SetViewMatrix(mvx);
 		g_RightWall->SetViewMatrix(mvx);
 		g_FrontWall->SetViewMatrix(mvx);
 		g_BackWall->SetViewMatrix(mvx);
 		g_TopWall->SetViewMatrix(mvx);
+		g_BottomWall->SetViewMatrix(mvx);
 	}
 
 	if( g_bAutoRotating ) { // Part 2 : 重新計算 Light 的位置
 		UpdateLightPosition(delta);
 	}
+
+	//-------------------------------------------------------------
+	if (g_bLightOn_red) {	// 紅水晶 spot light 開關
+		g_Light_Red.diffuse = g_fLightI_crystalRED;
+		g_Light_Red.specular = g_fLightI_crystalRED;
+		g_pLight_red->SetColor(g_fLightI_crystalRED);	//wire sphere
+	}
+	else {
+		g_Light_Red.diffuse = g_fLightI_crystalOff;
+		g_Light_Red.specular = g_fLightI_crystalOff;
+		g_pLight_red->SetColor(g_fLightI_crystalOff);	//wire sphere
+	}
+
+	//-------------------------------------------------------------
 	// 如果需要重新計算時，在這邊計算每一個物件的顏色
-	g_pChecker->Update(delta, g_vLight, g_fLightI);
-	g_pGemSweet->Update(delta, g_vLight, g_fLightI);
-	g_pGemToy->Update(delta, g_vLight, g_fLightI);
-	g_pGemGarden->Update(delta, g_vLight, g_fLightI);
-	g_pStarFruit->Update(delta, g_vLight, g_fLightI);
-
 	g_pLight->Update(delta);
+	g_pLight_red->Update(delta);
 
-	g_LeftWall->Update(delta, g_vLight, g_fLightI);
-	g_RightWall->Update(delta, g_vLight, g_fLightI);
-	g_FrontWall->Update(delta, g_vLight, g_fLightI);
-	g_BackWall->Update(delta, g_vLight, g_fLightI);
-	g_TopWall->Update(delta, g_vLight, g_fLightI);
+	g_LeftWall->Update(delta, g_Light_Point);		// walls
+	g_RightWall->Update(delta, g_Light_Point);
+	g_FrontWall->Update(delta, g_Light_Point);
+	g_BackWall->Update(delta, g_Light_Point);
+	g_TopWall->Update(delta, g_Light_Point);
+	g_BottomWall->Update(delta, g_Light_Point, g_Light_Red);
+
+	g_pGemSweet->Update(delta, g_Light_Point, g_Light_Red);		// gems
+	g_pGemToy->Update(delta, g_Light_Point, g_Light_Red);
+	g_pGemGarden->Update(delta, g_Light_Point, g_Light_Red);
+	g_pStarFruit->Update(delta, g_Light_Point, g_Light_Red);	// center
 
 	GL_Display();
 }
@@ -354,6 +447,9 @@ void Win_Keyboard( unsigned char key, int x, int y )
 	// Part 2 : for single light source
 	case  SPACE_KEY:
 		g_bAutoRotating = !g_bAutoRotating;
+		break;
+	case  'o':
+		g_bLightOn_red = !g_bLightOn_red;	// spot light above red crystal 開關燈
 		break;
 
 	// ---------- for camera movment -----------
@@ -426,42 +522,62 @@ void Win_Keyboard( unsigned char key, int x, int y )
 	case 82: // R key
 		if( g_fLightR <= 0.95f ) g_fLightR += 0.05f;
 		g_fLightI.x = g_fLightR;
+		g_Light_Point.diffuse.x = g_fLightI.x;		//更新光源diffuse color
+		g_Light_Point.specular.x = g_fLightI.x;		//更新光源specular color
 		g_pLight->SetColor(g_fLightI);
 		break;
 	case 114: // r key
 		if( g_fLightR >= 0.05f ) g_fLightR -= 0.05f;
 		g_fLightI.x = g_fLightR;
+		g_Light_Point.diffuse.x = g_fLightI.x;
+		g_Light_Point.specular.x = g_fLightI.x;
 		g_pLight->SetColor(g_fLightI);
 		break;
 	case 71: // G key
 		if( g_fLightG <= 0.95f ) g_fLightG += 0.05f;
 		g_fLightI.y = g_fLightG;
+		g_Light_Point.diffuse.y = g_fLightI.y;
+		g_Light_Point.specular.y = g_fLightI.y;
 		g_pLight->SetColor(g_fLightI);
 		break;
 	case 103: // g key
 		if( g_fLightG >= 0.05f ) g_fLightG -= 0.05f;
 		g_fLightI.y = g_fLightG;
+		g_Light_Point.diffuse.y = g_fLightI.y;
+		g_Light_Point.specular.y = g_fLightI.y;
 		g_pLight->SetColor(g_fLightI);
 		break;
 	case 66: // B key
 		if( g_fLightB <= 0.95f ) g_fLightB += 0.05f;
 		g_fLightI.z = g_fLightB;
+		g_Light_Point.diffuse.z = g_fLightI.z;
+		g_Light_Point.specular.z = g_fLightI.z;
 		g_pLight->SetColor(g_fLightI);
 		break;
 	case 98: // b key
 		if( g_fLightB >= 0.05f ) g_fLightB -= 0.05f;
 		g_fLightI.z = g_fLightB;
+		g_Light_Point.diffuse.z = g_fLightI.z;
+		g_Light_Point.specular.z = g_fLightI.z;
 		g_pLight->SetColor(g_fLightI);
 		break;
 //---------------------------------------------------
     case 033:
 		glutIdleFunc( NULL );
+		delete g_FrontWall;
+		delete g_BackWall;
+		delete g_LeftWall;
+		delete g_RightWall;
+		delete g_TopWall;
+		delete g_BottomWall;
+
 		delete g_pGemSweet;
 		delete g_pGemToy;
 		delete g_pGemGarden;
-		delete g_pChecker;
 		delete g_pStarFruit;
+
 		delete g_pLight;
+		delete g_pLight_red;
 		CCamera::getInstance()->destroyInstance();
         exit( EXIT_SUCCESS );
         break;
@@ -488,11 +604,65 @@ void Win_Mouse(int button, int state, int x, int y) {
 void Win_SpecialKeyboard(int key, int x, int y) {
 
 	switch(key) {
+		case GLUT_KEY_UP:		// 目前按下的是向上方向鍵
+			g_MoveDir = vec4(g_fRadius*sin(g_fTheta)*sin(g_fPhi), 0.f, g_fRadius*sin(g_fTheta)*cos(g_fPhi), 1.f);
+			g_MoveDir = normalize(g_MoveDir);
+			g_matMoveDir = Translate(g_MoveDir.x, 0.f, g_MoveDir.z);
+			if (g_fCameraMoveX <= 8.5f && g_fCameraMoveX >= -8.5f && g_fCameraMoveZ <= 8.5f && g_fCameraMoveZ >= -8.5f) {	//限制空間
+				g_fCameraMoveX += (g_matMoveDir._m[0][3] * 0.2f);
+				g_fCameraMoveZ += (g_matMoveDir._m[2][3] * 0.2f);
+			}
+			else {	// 修正卡牆
+				if (g_fCameraMoveX > 8.5) g_fCameraMoveX = 8.5f;
+				else if (g_fCameraMoveX < -8.5) g_fCameraMoveX = -8.5f;
+				if (g_fCameraMoveZ > 8.5) g_fCameraMoveZ = 8.5f;
+				else if (g_fCameraMoveZ < -8.5) g_fCameraMoveZ = -8.5f;
+			}
+			break;
+		case GLUT_KEY_DOWN:		// 目前按下的是向下方向鍵
+			g_MoveDir = vec4(g_fRadius*sin(g_fTheta)*sin(g_fPhi), 0.f, g_fRadius*sin(g_fTheta)*cos(g_fPhi), 1.f);
+			g_MoveDir = normalize(g_MoveDir);
+			g_matMoveDir = Translate(g_MoveDir.x, 0.f, g_MoveDir.z);
+			if (g_fCameraMoveX <= 8.5f && g_fCameraMoveX >= -8.5f && g_fCameraMoveZ <= 8.5f && g_fCameraMoveZ >= -8.5f) {	//限制空間
+				g_fCameraMoveX -= (g_matMoveDir._m[0][3] * 0.2f);
+				g_fCameraMoveZ -= (g_matMoveDir._m[2][3] * 0.2f);
+			}
+			else {	// 修正卡牆
+				if (g_fCameraMoveX > 8.5) g_fCameraMoveX = 8.5f;
+				else if (g_fCameraMoveX < -8.5) g_fCameraMoveX = -8.5f;
+				if (g_fCameraMoveZ > 8.5) g_fCameraMoveZ = 8.5f;
+				else if (g_fCameraMoveZ < -8.5) g_fCameraMoveZ = -8.5f;
+			}
+			break;
 		case GLUT_KEY_LEFT:		// 目前按下的是向左方向鍵
-
+			g_MoveDir = vec4(g_fRadius*sin(g_fTheta)*sin(g_fPhi), 0.f, g_fRadius*sin(g_fTheta)*cos(g_fPhi), 1.f);
+			g_MoveDir = normalize(g_MoveDir);
+			g_matMoveDir = RotateY(90.f) * Translate(g_MoveDir.x, 0.f, g_MoveDir.z);
+			if (g_fCameraMoveX <= 8.5f && g_fCameraMoveX >= -8.5f && g_fCameraMoveZ <= 8.5f && g_fCameraMoveZ >= -8.5f) {	//限制空間
+				g_fCameraMoveX += (g_matMoveDir._m[0][3] * 0.2f);
+				g_fCameraMoveZ += (g_matMoveDir._m[2][3] * 0.2f);
+			}
+			else {	// 修正卡牆
+				if (g_fCameraMoveX > 8.5) g_fCameraMoveX = 8.5f;
+				else if (g_fCameraMoveX < -8.5) g_fCameraMoveX = -8.5f;
+				if (g_fCameraMoveZ > 8.5) g_fCameraMoveZ = 8.5f;
+				else if (g_fCameraMoveZ < -8.5) g_fCameraMoveZ = -8.5f;
+			}
 			break;
 		case GLUT_KEY_RIGHT:	// 目前按下的是向右方向鍵
-
+			g_MoveDir = vec4(g_fRadius*sin(g_fTheta)*sin(g_fPhi), 0.f, g_fRadius*sin(g_fTheta)*cos(g_fPhi), 1.f);
+			g_MoveDir = normalize(g_MoveDir);
+			g_matMoveDir = RotateY(90.f) * Translate(g_MoveDir.x, 0.f, g_MoveDir.z);
+			if (g_fCameraMoveX <= 8.5f && g_fCameraMoveX >= -8.5f && g_fCameraMoveZ <= 8.5f && g_fCameraMoveZ >= -8.5f) {	//限制空間
+				g_fCameraMoveX -= (g_matMoveDir._m[0][3] * 0.2f);
+				g_fCameraMoveZ -= (g_matMoveDir._m[2][3] * 0.2f);
+			}
+			else {	// 修正卡牆
+				if (g_fCameraMoveX > 8.5) g_fCameraMoveX = 8.5f;
+				else if (g_fCameraMoveX < -8.5) g_fCameraMoveX = -8.5f;
+				if (g_fCameraMoveZ > 8.5) g_fCameraMoveZ = 8.5f;
+				else if (g_fCameraMoveZ < -8.5) g_fCameraMoveZ = -8.5f;
+			}
 			break;
 		default:
 			break;

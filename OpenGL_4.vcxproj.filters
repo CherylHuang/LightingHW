@@ -110,6 +110,9 @@
     <ClCompile Include="Common\CObjReader.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="Example2_spot.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="fsLighting_CPU.glsl">

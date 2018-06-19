@@ -80,24 +80,50 @@ void CShape::SetShader(GLuint uiShaderHandle)
 	m_uiColor = glGetUniformLocation(m_uiProgram, "vObjectColor");
 	glUniform4fv(m_uiColor, 1, m_fColor);
 
-#ifdef LIGHTING_WITHGPU
-	m_uiLightInView = glGetUniformLocation(m_uiProgram, "LightInView");
-	glUniform4fv(m_uiLightInView, 1, m_vLightInView);
-
-	m_uiAmbient = glGetUniformLocation(m_uiProgram, "AmbientProduct");
-	glUniform4fv(m_uiAmbient, 1, m_AmbientProduct);
-
-	m_uiDiffuse = glGetUniformLocation(m_uiProgram, "DiffuseProduct");
-	glUniform4fv(m_uiDiffuse, 1, m_DiffuseProduct);
-
-	m_uiSpecular = glGetUniformLocation(m_uiProgram, "SpecularProduct");
-	glUniform4fv(m_uiSpecular, 1, m_SpecularProduct);
+#ifdef LIGHTING_WITHGPU	
 
 	m_uiShininess = glGetUniformLocation(m_uiProgram, "fShininess");
 	glUniform1f(m_uiShininess, m_Material.shininess);
 
 	m_uiLighting = glGetUniformLocation(m_uiProgram, "iLighting");
 	glUniform1i(m_uiLighting, m_iLighting);
+
+
+	m_uiLightInView = glGetUniformLocation(m_uiProgram, "LightInView");			//材方
+	glUniform4fv(m_uiLightInView, 1, m_vLightInView);
+	m_uiAmbient = glGetUniformLocation(m_uiProgram, "AmbientProduct");
+	glUniform4fv(m_uiAmbient, 1, m_AmbientProduct);
+	m_uiDiffuse = glGetUniformLocation(m_uiProgram, "DiffuseProduct");
+	glUniform4fv(m_uiDiffuse, 1, m_DiffuseProduct);
+	m_uiSpecular = glGetUniformLocation(m_uiProgram, "SpecularProduct");
+	glUniform4fv(m_uiSpecular, 1, m_SpecularProduct);
+
+	m_uiLightInView2 = glGetUniformLocation(m_uiProgram, "LightInView2");		//材方
+	glUniform4fv(m_uiLightInView2, 1, m_vLightInView2);
+	m_uiAmbient2 = glGetUniformLocation(m_uiProgram, "AmbientProduct2");
+	glUniform4fv(m_uiAmbient2, 1, m_AmbientProduct2);
+	m_uiDiffuse2 = glGetUniformLocation(m_uiProgram, "DiffuseProduct2");
+	glUniform4fv(m_uiDiffuse2, 1, m_DiffuseProduct2);
+	m_uiSpecular2 = glGetUniformLocation(m_uiProgram, "SpecularProduct2");
+	glUniform4fv(m_uiSpecular2, 1, m_SpecularProduct2);
+
+	m_uiLightInView3 = glGetUniformLocation(m_uiProgram, "LightInView3");		//材方
+	glUniform4fv(m_uiLightInView3, 1, m_vLightInView3);
+	m_uiAmbient3 = glGetUniformLocation(m_uiProgram, "AmbientProduct3");
+	glUniform4fv(m_uiAmbient3, 1, m_AmbientProduct3);
+	m_uiDiffuse3 = glGetUniformLocation(m_uiProgram, "DiffuseProduct3");
+	glUniform4fv(m_uiDiffuse3, 1, m_DiffuseProduct3);
+	m_uiSpecular3 = glGetUniformLocation(m_uiProgram, "SpecularProduct3");
+	glUniform4fv(m_uiSpecular3, 1, m_SpecularProduct3);
+
+	m_uiLightInView4 = glGetUniformLocation(m_uiProgram, "LightInView4");		//材方
+	glUniform4fv(m_uiLightInView4, 1, m_vLightInView4);
+	m_uiAmbient4 = glGetUniformLocation(m_uiProgram, "AmbientProduct4");
+	glUniform4fv(m_uiAmbient4, 1, m_AmbientProduct4);
+	m_uiDiffuse4 = glGetUniformLocation(m_uiProgram, "DiffuseProduct4");
+	glUniform4fv(m_uiDiffuse4, 1, m_DiffuseProduct4);
+	m_uiSpecular4 = glGetUniformLocation(m_uiProgram, "SpecularProduct4");
+	glUniform4fv(m_uiSpecular4, 1, m_SpecularProduct4);
 
 #endif
 
@@ -117,12 +143,28 @@ void CShape::DrawingSetShader()
 // 盢戈癟穝 Shader い
 #ifdef LIGHTING_WITHGPU
 	glUniform4fv(m_uiColor, 1, m_fColor ); 
-	glUniform4fv(m_uiLightInView, 1, m_vLightInView); 
-	glUniform4fv(m_uiAmbient, 1, m_AmbientProduct); 
-	glUniform4fv(m_uiDiffuse, 1, m_DiffuseProduct); 
-	glUniform4fv(m_uiSpecular, 1, m_SpecularProduct); 
 	glUniform1f(m_uiShininess, m_Material.shininess); 
 	glUniform1i(m_uiLighting, m_iLighting);
+
+	glUniform4fv(m_uiLightInView, 1, m_vLightInView);		//材方
+	glUniform4fv(m_uiAmbient, 1, m_AmbientProduct);
+	glUniform4fv(m_uiDiffuse, 1, m_DiffuseProduct);
+	glUniform4fv(m_uiSpecular, 1, m_SpecularProduct);
+
+	glUniform4fv(m_uiLightInView2, 1, m_vLightInView2);		//材方
+	glUniform4fv(m_uiAmbient2, 1, m_AmbientProduct2);
+	glUniform4fv(m_uiDiffuse2, 1, m_DiffuseProduct2);
+	glUniform4fv(m_uiSpecular2, 1, m_SpecularProduct2);
+
+	glUniform4fv(m_uiLightInView3, 1, m_vLightInView3);		//材方
+	glUniform4fv(m_uiAmbient3, 1, m_AmbientProduct3);
+	glUniform4fv(m_uiDiffuse3, 1, m_DiffuseProduct3);
+	glUniform4fv(m_uiSpecular3, 1, m_SpecularProduct3);
+
+	glUniform4fv(m_uiLightInView4, 1, m_vLightInView4);		//材方
+	glUniform4fv(m_uiAmbient4, 1, m_AmbientProduct4);
+	glUniform4fv(m_uiDiffuse4, 1, m_DiffuseProduct4);
+	glUniform4fv(m_uiSpecular4, 1, m_SpecularProduct4);
 #endif
 
 }
@@ -139,12 +181,27 @@ void CShape::DrawingWithoutSetShader()
 	}
 #ifdef LIGHTING_WITHGPU
 	glUniform4fv(m_uiColor, 1, m_fColor ); 
-	glUniform4fv(m_uiLightInView, 1, m_vLightInView); 
-	glUniform4fv(m_uiAmbient,  1, m_AmbientProduct); 
-	glUniform4fv(m_uiDiffuse,  1, m_DiffuseProduct); 
-	glUniform4fv(m_uiSpecular, 1, m_SpecularProduct); 
 	glUniform1f(m_uiShininess, m_Material.shininess); 
-	glUniform1i(m_uiLighting, m_iLighting); 
+	glUniform1i(m_uiLighting, m_iLighting);
+	glUniform4fv(m_uiLightInView, 1, m_vLightInView);	//材方
+	glUniform4fv(m_uiAmbient, 1, m_AmbientProduct);
+	glUniform4fv(m_uiDiffuse, 1, m_DiffuseProduct);
+	glUniform4fv(m_uiSpecular, 1, m_SpecularProduct);
+
+	glUniform4fv(m_uiLightInView2, 1, m_vLightInView2);	//材方
+	glUniform4fv(m_uiAmbient2, 1, m_AmbientProduct2);
+	glUniform4fv(m_uiDiffuse2, 1, m_DiffuseProduct2);
+	glUniform4fv(m_uiSpecular2, 1, m_SpecularProduct2);
+
+	glUniform4fv(m_uiLightInView3, 1, m_vLightInView3);		//材方
+	glUniform4fv(m_uiAmbient3, 1, m_AmbientProduct3);
+	glUniform4fv(m_uiDiffuse3, 1, m_DiffuseProduct3);
+	glUniform4fv(m_uiSpecular3, 1, m_SpecularProduct3);
+
+	glUniform4fv(m_uiLightInView4, 1, m_vLightInView4);		//材方
+	glUniform4fv(m_uiAmbient4, 1, m_AmbientProduct4);
+	glUniform4fv(m_uiDiffuse4, 1, m_DiffuseProduct4);
+	glUniform4fv(m_uiSpecular4, 1, m_SpecularProduct4);
 #endif
 }
 
@@ -427,3 +484,60 @@ vec4 CShape::PhongReflectionModel(vec4 vPoint, vec3 vNormal, const LightSource &
 }
 
 #endif
+
+
+
+//------------------------Multiple lights update------------------------
+
+void CShape::UpdateMultiLight(const int LightNum)
+{
+	// Lighting With GPU
+	if (LightNum > 0 && LightNum <= 4) {	//材方穝 m_Light1
+
+		m_vLightInView = m_mxView * m_Light1.position;		// 盢 Light 锣传描繷畒夹
+															// 衡 AmbientProduct DiffuseProduct 籔 SpecularProduct ず甧
+		m_AmbientProduct = m_Material.ka * m_Material.ambient  *  m_Light1.ambient;
+		m_AmbientProduct.w = m_Material.ambient.w;
+		m_DiffuseProduct = m_Material.kd * m_Material.diffuse  *  m_Light1.diffuse;
+		m_DiffuseProduct.w = m_Material.diffuse.w;
+		// 玂痙﹍ alpha ぃ方籔ㄤ把计耑
+		m_SpecularProduct = m_Material.ks * m_Material.specular * m_Light1.specular;
+		m_SpecularProduct.w = m_Material.specular.w;
+	}
+	if (LightNum > 0 && LightNum <= 3) {	//材方穝 m_Light2
+
+		m_vLightInView2 = m_mxView * m_Light2.position;		// 盢 Light 锣传描繷畒夹
+															// 衡 AmbientProduct DiffuseProduct 籔 SpecularProduct ず甧
+		m_AmbientProduct2 = m_Material.ka * m_Material.ambient  *  m_Light2.ambient;
+		m_AmbientProduct2.w = m_Material.ambient.w;
+		m_DiffuseProduct2 = m_Material.kd * m_Material.diffuse  *  m_Light2.diffuse;
+		m_DiffuseProduct2.w = m_Material.diffuse.w;
+		// 玂痙﹍ alpha ぃ方籔ㄤ把计耑
+		m_SpecularProduct2 = m_Material.ks * m_Material.specular * m_Light2.specular;
+		m_SpecularProduct2.w = m_Material.specular.w;
+	}
+	if (LightNum > 0 && LightNum <= 2) {	//材方穝 m_Light3
+
+		m_vLightInView3 = m_mxView * m_Light3.position;		// 盢 Light 锣传描繷畒夹
+															// 衡 AmbientProduct DiffuseProduct 籔 SpecularProduct ず甧
+		m_AmbientProduct3 = m_Material.ka * m_Material.ambient  *  m_Light3.ambient;
+		m_AmbientProduct3.w = m_Material.ambient.w;
+		m_DiffuseProduct3 = m_Material.kd * m_Material.diffuse  *  m_Light3.diffuse;
+		m_DiffuseProduct3.w = m_Material.diffuse.w;
+		// 玂痙﹍ alpha ぃ方籔ㄤ把计耑
+		m_SpecularProduct3 = m_Material.ks * m_Material.specular * m_Light3.specular;
+		m_SpecularProduct3.w = m_Material.specular.w;
+	}
+	if (LightNum > 0 && LightNum <= 1) {	//材方穝 m_Light4
+
+		m_vLightInView4 = m_mxView * m_Light4.position;		// 盢 Light 锣传描繷畒夹
+															// 衡 AmbientProduct DiffuseProduct 籔 SpecularProduct ず甧
+		m_AmbientProduct4 = m_Material.ka * m_Material.ambient  *  m_Light4.ambient;
+		m_AmbientProduct4.w = m_Material.ambient.w;
+		m_DiffuseProduct4 = m_Material.kd * m_Material.diffuse  *  m_Light4.diffuse;
+		m_DiffuseProduct4.w = m_Material.diffuse.w;
+		// 玂痙﹍ alpha ぃ方籔ㄤ把计耑
+		m_SpecularProduct4 = m_Material.ks * m_Material.specular * m_Light4.specular;
+		m_SpecularProduct4.w = m_Material.specular.w;
+	}
+}

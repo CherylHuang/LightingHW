@@ -5,12 +5,20 @@ in vec3 vNormal;    // Vertex Normal
 in vec4 vVtxColor;  // Vertex Color
 
 out vec3 fN;// 輸出 Normal 在鏡頭座標下的方向
-out vec3 fL;// 輸出 Light Direction 在鏡頭座標下的方向
 out vec3 fV;// 輸出 View Direction 在鏡頭座標下的方向
+
+out vec3 fL;// 輸出 Light Direction 在鏡頭座標下的方向
+out vec3 fL2;// 輸出 Light Direction 在鏡頭座標下的方向
+out vec3 fL3;// 輸出 Light Direction 在鏡頭座標下的方向
+out vec3 fL4;// 輸出 Light Direction 在鏡頭座標下的方向
 
 uniform mat4  ModelView;   // Model View Matrix
 uniform mat4  Projection;  // Projection Matrix
+
 uniform vec4  LightInView; // Light's position in View Space
+uniform vec4  LightInView2; // Light's position in View Space
+uniform vec4  LightInView3; // Light's position in View Space
+uniform vec4  LightInView4; // Light's position in View Space
 
 void main()
 {
@@ -24,5 +32,10 @@ void main()
 	fN = (ModelView * vec4(vNormal, 0.0)).xyz;
 
 	fL = vec3(LightInView.xyz - vPosInView.xyz);
+	fL2 = vec3(LightInView2.xyz - vPosInView.xyz);
+	fL3 = vec3(LightInView3.xyz - vPosInView.xyz);
+	fL4 = vec3(LightInView4.xyz - vPosInView.xyz);
+
 	gl_Position = Projection * vPosInView;
+
 }
